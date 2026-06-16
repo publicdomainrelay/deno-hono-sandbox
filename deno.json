@@ -10,7 +10,12 @@
   "imports": {
     "@hono/hono": "jsr:@hono/hono@^4"
   },
+  "tasks": {
+    "check": "deno check lib/common/mod.ts lib/abc/sandbox/mod.ts lib/sandbox-deno/mod.ts lib/hono-factory-sandbox-deno/mod.ts hono-sandbox/mod.ts",
+    "fmt": "deno fmt"
+  },
   "fmt": {
     "lineWidth": 100
-  }
+  },
+  "unstable": ["worker-options"]
 }

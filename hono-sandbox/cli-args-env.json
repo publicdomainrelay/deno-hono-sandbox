@@ -1,0 +1,19 @@
+{
+  "port": {
+    "type": "number",
+    "env": "PORT",
+    "default": 2584,
+    "description": "HTTP listen port"
+  },
+  "hostname": {
+    "type": "string",
+    "env": "HOSTNAME",
+    "default": "127.0.0.1",
+    "description": "HTTP listen hostname"
+  },
+  "timeoutMs": {
+    "type": "number",
+    "env": "SANDBOX_TIMEOUT_MS",
+    "description": "Default execution timeout in milliseconds"
+  }
+}

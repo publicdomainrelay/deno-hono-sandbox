@@ -1,24 +1,20 @@
 import { createSandboxFactory } from "@publicdomainrelay/hono-factory-sandbox-deno";
+import { loadConfig } from "@publicdomainrelay/common";
+import type { ArgDef } from "@publicdomainrelay/common";
 
-function getPort(): number {
-  const argPort = Deno.args[0];
-  if (argPort) return parseInt(argPort);
-  const envPort = Deno.env.get("PORT");
-  if (envPort) return parseInt(envPort);
-  return 2584;
-}
+const ARGS: Record<string, ArgDef> = {
+  port: { type: "number", env: "PORT", default: 2584 },
+  hostname: { type: "string", env: "HOSTNAME", default: "127.0.0.1" },
+  timeoutMs: { type: "number", env: "SANDBOX_TIMEOUT_MS" },
+};
 
-function getHostname(): string {
-  return Deno.env.get("HOSTNAME") ?? "127.0.0.1";
-}
+const cfg = loadConfig(ARGS);
 
-const port = getPort();
-const hostname = getHostname();
-const timeoutMs = Deno.env.get("SANDBOX_TIMEOUT_MS");
+const port = cfg.port as number;
+const hostname = cfg.hostname as string;
+const timeoutMs = cfg.timeoutMs as number | undefined;
 
-const factory = createSandboxFactory({
-  timeoutMs: timeoutMs ? parseInt(timeoutMs) : undefined,
-});
+const factory = createSandboxFactory({ timeoutMs });
 
 const server = Deno.serve({ port, hostname }, factory.app.fetch);
 console.error(`Sandbox server on http://${hostname}:${port}/`);
