@@ -4,6 +4,8 @@ import type {
   Bundler,
   BundleRequest,
   BundleResponse,
+  BundleTarRequest,
+  BundleTarResponse,
   ExecRequest,
   Sandbox,
   SandboxResponse,
@@ -104,6 +106,29 @@ export function createSandboxFactory(opts: SandboxFactoryOptions = {}): SandboxF
     };
 
     const result: BundleResponse = await bundler.bundle(req);
+
+    if (!result.bundleJs && result.stderr) {
+      return c.json({ error: "bundle failed", ...result }, 400);
+    }
+
+    return c.json(result);
+  });
+
+  app.post("/bundleTar", async (c) => {
+    let body: { tarBase64?: string };
+    try {
+      body = await c.req.json();
+    } catch {
+      throw new SandboxError("invalid JSON body", 400);
+    }
+
+    if (!body.tarBase64 || typeof body.tarBase64 !== "string") {
+      throw new SandboxError('"tarBase64" field is required', 400);
+    }
+
+    const req: BundleTarRequest = { tarBase64: body.tarBase64 };
+
+    const result: BundleTarResponse = await bundler.bundleTar(req);
 
     if (!result.bundleJs && result.stderr) {
       return c.json({ error: "bundle failed", ...result }, 400);
