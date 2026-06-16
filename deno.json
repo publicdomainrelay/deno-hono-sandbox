@@ -8,10 +8,14 @@
   ],
   "nodeModulesDir": "auto",
   "imports": {
-    "@hono/hono": "jsr:@hono/hono@^4"
+    "@hono/hono": "jsr:@hono/hono@^4",
+    "@std/assert": "jsr:@std/assert@^1"
   },
   "tasks": {
     "check": "deno check lib/common/mod.ts lib/abc/sandbox/mod.ts lib/sandbox-deno/mod.ts lib/hono-factory-sandbox-deno/mod.ts hono-sandbox/mod.ts",
+    "test": "deno test --allow-env --allow-read --unstable-worker-options test/",
+    "test:sandbox": "deno test --allow-env --allow-read --unstable-worker-options test/sandbox/",
+    "test:factory": "deno test --allow-env --allow-read --unstable-worker-options test/hono-factory/",
     "fmt": "deno fmt"
   },
   "fmt": {
