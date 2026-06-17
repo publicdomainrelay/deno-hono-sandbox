@@ -9,6 +9,8 @@
   "nodeModulesDir": "auto",
   "imports": {
     "@publicdomainrelay/cli-args-env": "../typescript-helpers/lib/cli-args-env/mod.ts",
+    "@publicdomainrelay/hono-error-middleware": "../typescript-helpers/lib/hono-error-middleware/mod.ts",
+    "@publicdomainrelay/logger": "../typescript-helpers/lib/logger/mod.ts",
     "@hono/hono": "jsr:@hono/hono@^4",
     "@std/assert": "jsr:@std/assert@^1"
   },

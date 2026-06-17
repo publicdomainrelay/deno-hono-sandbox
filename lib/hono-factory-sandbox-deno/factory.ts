@@ -1,5 +1,7 @@
 import { Hono } from "jsr:@hono/hono@^4";
 import { cors } from "jsr:@hono/hono@^4/cors";
+import { registerErrorMiddleware } from "@publicdomainrelay/hono-error-middleware";
+import { createLogger } from "@publicdomainrelay/logger";
 import type {
   Bundler,
   BundleRequest,
@@ -15,6 +17,7 @@ import { createDenoBundler, createDenoSandbox } from "jsr:@publicdomainrelay/san
 
 export interface SandboxFactoryOptions {
   timeoutMs?: number;
+  log?: ReturnType<typeof createLogger>;
 }
 
 export interface SandboxFactory {
@@ -26,24 +29,13 @@ export interface SandboxFactory {
 export function createSandboxFactory(opts: SandboxFactoryOptions = {}): SandboxFactory {
   const sandbox = createDenoSandbox();
   const bundler = createDenoBundler();
+  const log = opts.log ?? createLogger("sandbox");
 
   const app = new Hono();
 
   app.use("*", cors());
 
-  app.onError((err) => {
-    if (err instanceof SandboxError) {
-      return new Response(JSON.stringify({ error: err.message }), {
-        status: err.status,
-        headers: { "content-type": "application/json" },
-      });
-    }
-    const msg = err instanceof Error ? err.message : String(err);
-    return new Response(JSON.stringify({ error: msg }), {
-      status: 500,
-      headers: { "content-type": "application/json" },
-    });
-  });
+  registerErrorMiddleware(app, log);
 
   app.get("/health", (c) => {
     return c.json({ status: "ok" });

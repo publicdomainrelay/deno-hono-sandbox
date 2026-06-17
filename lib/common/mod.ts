@@ -8,4 +8,7 @@ export class SandboxError extends Error {
     this.status = status;
     this.name = "SandboxError";
   }
+  toJSON(): { error: string; status: number } {
+    return { error: this.message, status: this.status };
+  }
 }
