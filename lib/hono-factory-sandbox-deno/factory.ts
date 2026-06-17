@@ -1,5 +1,5 @@
-import { Hono } from "@hono/hono";
-import { cors } from "@hono/hono/cors";
+import { Hono } from "jsr:@hono/hono@^4";
+import { cors } from "jsr:@hono/hono@^4/cors";
 import type {
   Bundler,
   BundleRequest,
@@ -9,9 +9,9 @@ import type {
   ExecRequest,
   Sandbox,
   SandboxResponse,
-} from "@publicdomainrelay/sandbox-abc";
-import { SandboxError } from "@publicdomainrelay/common";
-import { createDenoBundler, createDenoSandbox } from "@publicdomainrelay/sandbox-deno";
+} from "jsr:@publicdomainrelay/sandbox-abc@0.0.0";
+import { SandboxError } from "jsr:@publicdomainrelay/sandbox-common@0.0.0";
+import { createDenoBundler, createDenoSandbox } from "jsr:@publicdomainrelay/sandbox-deno@0.0.0";
 
 export interface SandboxFactoryOptions {
   timeoutMs?: number;

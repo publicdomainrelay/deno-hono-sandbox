@@ -2,5 +2,12 @@
   "name": "@publicdomainrelay/hono-sandbox",
   "version": "0.0.0",
   "license": "Unlicense",
-  "exports": "./mod.ts"
+  "exports": "./mod.ts",
+  "publish": {
+    "include": ["cli-args-env.json"]
+  },
+  "imports": {
+    "@publicdomainrelay/hono-factory-sandbox-deno": "jsr:@publicdomainrelay/hono-factory-sandbox-deno@0.0.0",
+    "@publicdomainrelay/common": "jsr:@publicdomainrelay/common@0.0.0"
+  }
 }

@@ -1,18 +1,19 @@
-import { createSandboxFactory } from "@publicdomainrelay/hono-factory-sandbox-deno";
-import { loadConfig } from "@publicdomainrelay/common";
-import type { ArgDef } from "@publicdomainrelay/common";
+import { Command } from "jsr:@publicdomainrelay/sandbox-common@0.0.0";
+import { createSandboxFactory } from "jsr:@publicdomainrelay/hono-factory-sandbox-deno@0.0.0";
+import cliArgsEnv from "./cli-args-env.json" with { type: "json" };
 
-const ARGS: Record<string, ArgDef> = {
-  port: { type: "number", env: "PORT", default: 2584 },
-  hostname: { type: "string", env: "HOSTNAME", default: "127.0.0.1" },
-  timeoutMs: { type: "number", env: "SANDBOX_TIMEOUT_MS" },
-};
+let runtimeConfig: Record<string, unknown> | null = null;
+try {
+  const mod = await import("./config.json", { with: { type: "json" } });
+  runtimeConfig = mod.default as Record<string, unknown>;
+} catch { /* optional */ }
 
-const cfg = loadConfig(ARGS);
+const cmd = await new Command("CONFIG_PATH_HONO_SANDBOX", cliArgsEnv, runtimeConfig)
+  .resolve();
 
-const port = cfg.port as number;
-const hostname = cfg.hostname as string;
-const timeoutMs = cfg.timeoutMs as number | undefined;
+const port = cmd.options.port as number;
+const hostname = cmd.options.hostname as string;
+const timeoutMs = cmd.options.timeoutMs as number | undefined;
 
 const factory = createSandboxFactory({ timeoutMs });
 
