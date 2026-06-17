@@ -1,4 +1,4 @@
-import { Command } from "jsr:@publicdomainrelay/sandbox-common@0.0.0";
+import { Command } from "@publicdomainrelay/cli-args-env";
 import { createSandboxFactory } from "jsr:@publicdomainrelay/hono-factory-sandbox-deno@0.0.0";
 import cliArgsEnv from "./cli-args-env.json" with { type: "json" };
 
