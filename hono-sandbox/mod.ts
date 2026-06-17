@@ -1,5 +1,5 @@
 import { Command } from "@publicdomainrelay/cli-args-env";
-import { createSandboxFactory } from "jsr:@publicdomainrelay/hono-factory-sandbox-deno@0.0.0";
+import { createSandboxFactory } from "@publicdomainrelay/hono-factory-sandbox-deno";
 import cliArgsEnv from "./cli-args-env.json" with { type: "json" };
 
 let runtimeConfig: Record<string, unknown> | null = null;
