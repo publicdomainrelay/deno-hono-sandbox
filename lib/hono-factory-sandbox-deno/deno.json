@@ -5,7 +5,6 @@
   "exports": "./mod.ts",
   "dependencies": {
     "@publicdomainrelay/sandbox-abc": "jsr:@publicdomainrelay/sandbox-abc@0.0.0",
-    "@publicdomainrelay/common": "jsr:@publicdomainrelay/common@0.0.0",
     "@publicdomainrelay/sandbox-deno": "jsr:@publicdomainrelay/sandbox-deno@0.0.0"
   }
 }
