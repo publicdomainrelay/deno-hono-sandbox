@@ -17,9 +17,11 @@
   "tasks": {
     "check": "deno check lib/common/mod.ts lib/abc/sandbox/mod.ts lib/sandbox-deno/mod.ts lib/sandbox-deno/bundler.ts lib/hono-factory-sandbox-deno/mod.ts lib/hono-factory-sandbox-deno/factory.ts hono-sandbox/mod.ts",
     "dev": "deno run --allow-env --allow-read --allow-write --allow-run --allow-net --unstable-worker-options hono-sandbox/mod.ts",
-    "test": "deno test --allow-env --allow-read --allow-write --allow-run --unstable-worker-options test/",
+    "test": "deno test --allow-net --allow-env --allow-read --allow-write --allow-run --unstable-worker-options test/",
     "test:sandbox": "deno test --allow-env --allow-read --allow-write --allow-run --unstable-worker-options test/sandbox/",
     "test:factory": "deno test --allow-env --allow-read --allow-write --allow-run --unstable-worker-options test/hono-factory/",
+    "test:integration": "deno test --allow-net --allow-env --unstable-worker-options test/integration_test.ts",
+    "test:cli": "deno test --allow-run --allow-read test/cli_smoke_test.ts",
     "fmt": "deno fmt"
   },
   "fmt": {
