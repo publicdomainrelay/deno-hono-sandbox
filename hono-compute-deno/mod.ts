@@ -9,7 +9,7 @@ import {
   createRemotePdsClient,
   signComputeServiceAuth,
 } from "@publicdomainrelay/compute-deno-atproto";
-import { createDenoBundler } from "@publicdomainrelay/sandbox-deno";
+import { createDenoBundler, createPersistentDenoWorker } from "@publicdomainrelay/sandbox-deno";
 import { loadOrCreateAttestationKeyHex } from "@publicdomainrelay/utils-attestation-key";
 import { createSubscriber } from "@publicdomainrelay/did-key-relay-subscriber-xrpc";
 import { createSubscriberFactory } from "@publicdomainrelay/hono-factory-did-key-relay-subscriber-xrpc";
@@ -109,6 +109,7 @@ const runner = createDenoComputeInstanceRunner({
   manifestStore,
   instanceStore,
   bundler,
+  createWorker: createPersistentDenoWorker,
   timeoutMs: options.timeoutMs as number | undefined,
 });
 

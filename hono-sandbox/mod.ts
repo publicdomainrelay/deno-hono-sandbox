@@ -1,5 +1,6 @@
 import { Command } from "@publicdomainrelay/cli-args-env";
 import { createSandboxFactory } from "@publicdomainrelay/hono-factory-sandbox-deno";
+import { createLogger } from "@publicdomainrelay/logger";
 import cliArgsEnv from "./cli-args-env.json" with { type: "json" };
 
 let runtimeConfig: Record<string, unknown> | null = null;
@@ -17,8 +18,14 @@ const timeoutMs = cmd.options.timeoutMs as number | undefined;
 
 const factory = createSandboxFactory({ timeoutMs });
 
-const server = Deno.serve({ port, hostname }, factory.app.fetch);
-console.error(`Sandbox server on http://${hostname}:${port}/`);
+const log = createLogger("sandbox");
+
+const server = Deno.serve(
+  { port, hostname, onListen: ({ hostname, port }) => {
+    log.info("listening", { hostname, port });
+  } },
+  factory.app.fetch,
+);
 
 function shutdown() {
   console.error("\nShutting down...");

@@ -16,8 +16,7 @@ import {
   DenoComputeError,
 } from "@publicdomainrelay/compute-deno-common";
 import type { WorkerRequest } from "@publicdomainrelay/compute-deno-common";
-import type { Bundler } from "@publicdomainrelay/sandbox-abc";
-import { createDenoBundler } from "@publicdomainrelay/sandbox-deno";
+import type { Bundler } from "@publicdomainrelay/sandbox-common";
 import { verifyComputeServiceAuth } from "@publicdomainrelay/compute-deno-atproto";
 
 export interface DenoComputeFactoryOptions {
@@ -25,7 +24,7 @@ export interface DenoComputeFactoryOptions {
   instanceStore: WorkerInstanceStore;
   runner: WorkerInstanceRunner;
   hostname: string;
-  bundler?: Bundler;
+  bundler: Bundler;
   signingKey?: SigningKey;
   strictAuth?: boolean;
 }
@@ -37,7 +36,7 @@ export interface DenoComputeFactory {
 export function createDenoComputeFactory(
   opts: DenoComputeFactoryOptions,
 ): DenoComputeFactory {
-  const bundler = opts.bundler ?? createDenoBundler();
+  const bundler = opts.bundler;
   const log = createLogger("compute-deno");
   const strictAuth = opts.strictAuth ?? true;
   const app = new Hono();

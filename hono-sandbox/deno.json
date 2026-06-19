@@ -1,8 +1,6 @@
 {
-  "name": "@publicdomainrelay/hono-sandbox",
   "version": "0.0.0",
   "license": "Unlicense",
-  "exports": "./mod.ts",
   "publish": {
     "include": ["cli-args-env.json"]
   },

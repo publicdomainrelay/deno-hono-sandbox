@@ -1,5 +1,5 @@
-import { Hono } from "jsr:@hono/hono@^4";
-import { cors } from "jsr:@hono/hono@^4/cors";
+import { Hono } from "@hono/hono";
+import { cors } from "@hono/hono/cors";
 import { registerErrorMiddleware } from "@publicdomainrelay/hono-error-middleware";
 import { createLogger } from "@publicdomainrelay/logger";
 import type {
@@ -11,9 +11,9 @@ import type {
   ExecRequest,
   Sandbox,
   SandboxResponse,
-} from "jsr:@publicdomainrelay/sandbox-abc@0.0.0";
-import { SandboxError } from "jsr:@publicdomainrelay/sandbox-common@0.0.0";
-import { createDenoBundler, createDenoSandbox } from "jsr:@publicdomainrelay/sandbox-deno@0.0.0";
+} from "@publicdomainrelay/sandbox-abc";
+import { SandboxError } from "@publicdomainrelay/sandbox-common";
+import { createDenoBundler, createDenoSandbox } from "@publicdomainrelay/sandbox-deno";
 
 export interface SandboxFactoryOptions {
   timeoutMs?: number;
