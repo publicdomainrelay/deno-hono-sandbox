@@ -18,13 +18,16 @@ import {
 import type { WorkerRequest } from "@publicdomainrelay/compute-deno-common";
 import type { Bundler } from "@publicdomainrelay/sandbox-abc";
 import { createDenoBundler } from "@publicdomainrelay/sandbox-deno";
+import { verifyComputeServiceAuth } from "@publicdomainrelay/compute-deno-atproto";
 
 export interface DenoComputeFactoryOptions {
   manifestStore: WorkerManifestStore;
   instanceStore: WorkerInstanceStore;
   runner: WorkerInstanceRunner;
+  hostname: string;
   bundler?: Bundler;
   signingKey?: SigningKey;
+  strictAuth?: boolean;
 }
 
 export interface DenoComputeFactory {
@@ -36,14 +39,64 @@ export function createDenoComputeFactory(
 ): DenoComputeFactory {
   const bundler = opts.bundler ?? createDenoBundler();
   const log = createLogger("compute-deno");
+  const strictAuth = opts.strictAuth ?? true;
   const app = new Hono();
+
+  function requireAuth(lxm: string) {
+    return async (c: { req: { header: (name: string) => string | undefined } }, next: () => Promise<void>) => {
+      if (!strictAuth) {
+        await next();
+        return;
+      }
+      const host = (c.req.header("host") ?? "").split(":")[0];
+      const authHeader = c.req.header("authorization");
+      try {
+        await verifyComputeServiceAuth(authHeader, host, lxm, strictAuth);
+      } catch (err) {
+        if (err instanceof DenoComputeError) {
+          return new Response(JSON.stringify(err.toJSON()), {
+            status: err.status,
+            headers: { "content-type": "application/json" },
+          });
+        }
+        throw err;
+      }
+      await next();
+    };
+  }
 
   app.use("*", cors());
   registerErrorMiddleware(app, log);
 
   app.get("/health", (c) => c.json({ status: "ok" }));
 
-  app.post(`/xrpc/${REGISTER_WORKER_MANIFEST_NSID}`, async (c) => {
+  app.get("/.well-known/did.json", (c) => {
+    const host = (c.req.header("host") ?? "").split(":")[0];
+    if (!host) throw new DenoComputeError("missing Host header", 400, "InvalidRequest");
+    return c.json({
+      "@context": ["https://www.w3.org/ns/did/v1"],
+      id: `did:web:${host}`,
+      service: [
+        {
+          id: "#register_worker_manifest",
+          type: "ComputeDenoService",
+          serviceEndpoint: `https://${host}`,
+        },
+        {
+          id: "#run_persistent_worker_instance",
+          type: "ComputeDenoService",
+          serviceEndpoint: `https://${host}`,
+        },
+        {
+          id: "#execute_worker_instance",
+          type: "ComputeDenoService",
+          serviceEndpoint: `https://${host}`,
+        },
+      ],
+    });
+  });
+
+  app.post(`/xrpc/${REGISTER_WORKER_MANIFEST_NSID}`, requireAuth(REGISTER_WORKER_MANIFEST_NSID), async (c) => {
     let body: { source?: string; denoJson?: string; denoLock?: string };
     try {
       body = await c.req.json();
@@ -84,7 +137,7 @@ export function createDenoComputeFactory(
     return c.json({ manifest, bundle: bundleResult.bundleJs });
   });
 
-  app.post(`/xrpc/${RUN_PERSISTENT_WORKER_INSTANCE_NSID}`, async (c) => {
+  app.post(`/xrpc/${RUN_PERSISTENT_WORKER_INSTANCE_NSID}`, requireAuth(RUN_PERSISTENT_WORKER_INSTANCE_NSID), async (c) => {
     let body: { manifest?: { uri?: string; cid?: string } };
     try {
       body = await c.req.json();
@@ -116,7 +169,7 @@ export function createDenoComputeFactory(
     return c.json({ instance });
   });
 
-  app.post(`/xrpc/${EXECUTE_WORKER_INSTANCE_NSID}`, async (c) => {
+  app.post(`/xrpc/${EXECUTE_WORKER_INSTANCE_NSID}`, requireAuth(EXECUTE_WORKER_INSTANCE_NSID), async (c) => {
     let body: {
       instance?: { uri?: string; cid?: string };
       request?: WorkerRequest;

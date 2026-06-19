@@ -20,6 +20,12 @@
     "@publicdomainrelay/compute-deno-abc": "./lib/abc/compute-deno/mod.ts",
     "@publicdomainrelay/compute-deno-atproto": "./lib/compute-deno-atproto/mod.ts",
     "@publicdomainrelay/hono-factory-compute-deno-atproto": "./lib/hono-factory-compute-deno-atproto/mod.ts",
+    "@publicdomainrelay/utils-attestation-key": "../typescript-helpers/lib/utils-attestation-key/mod.ts",
+    "@publicdomainrelay/did-key-relay-common": "../did-key-relay/lib/common/did-key-relay/mod.ts",
+    "@publicdomainrelay/did-key-relay-subscriber-abc": "../did-key-relay/lib/abc/did-key-relay-subscriber/mod.ts",
+    "@publicdomainrelay/did-key-relay-subscriber-xrpc": "../did-key-relay/lib/did-key-relay-subscriber-xrpc/mod.ts",
+    "@publicdomainrelay/hono-factory-did-key-relay-subscriber-xrpc": "../did-key-relay/lib/hono-factory-did-key-relay-subscriber-xrpc/mod.ts",
+    "@atproto/crypto": "npm:@atproto/crypto@^0.5.0",
     "@hono/hono": "jsr:@hono/hono@^4",
     "@std/assert": "jsr:@std/assert@^1"
   },

@@ -44,6 +44,16 @@
       "type": "number",
       "description": "Default execution timeout in milliseconds",
       "env": "COMPUTE_DENO_TIMEOUT_MS"
+    },
+    "relay": {
+      "type": "boolean",
+      "description": "Enable relay subscriber mode",
+      "env": "RELAY"
+    },
+    "relay-dispatcher-host": {
+      "type": "string",
+      "description": "Relay dispatcher hostname",
+      "env": "RELAY_DISPATCHER_HOST"
     }
   }
 }

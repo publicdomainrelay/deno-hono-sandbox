@@ -4,6 +4,7 @@ import {
   createDenoComputeManifestStore,
   createDenoComputeInstanceStore,
   createDenoComputeInstanceRunner,
+  signerFromPrivateKeyHex,
 } from "@publicdomainrelay/compute-deno-atproto";
 import type { PdsClient } from "@publicdomainrelay/compute-deno-atproto";
 import { createDenoBundler } from "@publicdomainrelay/sandbox-deno";
@@ -78,6 +79,8 @@ Deno.test("[integration] full round-trip: register → run → execute", async (
     instanceStore,
     runner,
     bundler,
+    hostname: "localhost",
+    strictAuth: false,
   });
 
   const source = "export function handle(e: unknown): unknown { return { status: 200, headers: {}, body: e }; }";
@@ -174,4 +177,71 @@ Deno.test("[integration] manifest store round-trip", async () => {
   assertEquals(record!.bundle, "console.log('hello');");
   assertEquals(record!.lock, "{}");
   assertEquals(record!.json, "{}");
+});
+
+Deno.test("[integration] manifest register with signing key produces attestation signature", async () => {
+  const hex = Array.from(crypto.getRandomValues(new Uint8Array(32)), (b) =>
+    b.toString(16).padStart(2, "0")
+  ).join("");
+  const signingKey = await signerFromPrivateKeyHex(hex);
+
+  const did = "did:plc:sig-test";
+  const records = new Map<string, Map<string, { uri: string; cid: string; value: Record<string, unknown> }>>();
+  records.set(did, new Map());
+  let seq = 0;
+
+  const pds: PdsClient = {
+    async createRecord(
+      repoDid: string,
+      collection: string,
+      record: Record<string, unknown>,
+    ): Promise<{ uri: string; cid: string }> {
+      const rkey = `s${(++seq).toString(16).padStart(8, "0")}`;
+      const uri = `at://${repoDid}/${collection}/${rkey}`;
+      const hash = new Uint8Array(
+        await crypto.subtle.digest(
+          "SHA-256",
+          new TextEncoder().encode(JSON.stringify(record)),
+        ),
+      );
+      const hex2 = Array.from(hash.slice(0, 16), (b) =>
+        b.toString(16).padStart(2, "0")
+      ).join("");
+      const cid = `bafyrei${hex2}`;
+      if (!records.has(repoDid)) records.set(repoDid, new Map());
+      records.get(repoDid)!.set(uri, { uri, cid, value: record });
+      return { uri, cid };
+    },
+    async getRecord(
+      repoDid: string,
+      _collection: string,
+      _rkey: string,
+    ): Promise<{ uri: string; cid: string; value: Record<string, unknown> } | null> {
+      const repoRecords = records.get(repoDid);
+      if (!repoRecords) return null;
+      const uri = `at://${repoDid}/${_collection}/${_rkey}`;
+      return repoRecords.get(uri) ?? null;
+    },
+  };
+
+  const manifestStore = createDenoComputeManifestStore(pds, did);
+  const ref = await manifestStore.register(
+    { lock: "{}", json: "{}", bundle: "console.log('signed');" },
+    signingKey,
+  );
+
+  assertExists(ref.uri);
+  assertExists(ref.cid);
+
+  const record = await manifestStore.get(ref.uri);
+  assertExists(record);
+  assertExists(record!.signatures);
+  assertEquals(Array.isArray(record!.signatures), true);
+  assertEquals(record!.signatures!.length, 1);
+
+  const sig = record!.signatures![0] as Record<string, unknown>;
+  assertEquals(sig.$type, "network.attested.signature");
+  assertEquals(typeof sig.key, "string");
+  assertEquals(typeof sig.cid, "string");
+  assertEquals(typeof (sig as Record<string, unknown>).signature, "object");
 });

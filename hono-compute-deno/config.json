@@ -1,3 +1,11 @@
 {
-  "description": "Optional runtime config for hono-compute-deno. Override via CONFIG_PATH_HONO_COMPUTE_DENO env var."
+  "port": 2585,
+  "hostname": "127.0.0.1",
+  "pds-url": null,
+  "atproto-handle": null,
+  "atproto-password": null,
+  "attestation-key-path": "./attestation-key.jwk",
+  "timeout-ms": null,
+  "relay": null,
+  "relay-dispatcher-host": null
 }
