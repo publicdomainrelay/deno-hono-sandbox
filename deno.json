@@ -1,25 +1,36 @@
 {
   "workspace": [
     "lib/common",
+    "lib/common/compute-deno-common",
     "lib/abc/sandbox",
+    "lib/abc/compute-deno",
     "lib/sandbox-deno",
+    "lib/compute-deno-atproto",
     "lib/hono-factory-sandbox-deno",
-    "hono-sandbox"
+    "lib/hono-factory-compute-deno-atproto",
+    "hono-sandbox",
+    "hono-compute-deno"
   ],
   "nodeModulesDir": "auto",
   "imports": {
     "@publicdomainrelay/cli-args-env": "../typescript-helpers/lib/cli-args-env/mod.ts",
     "@publicdomainrelay/hono-error-middleware": "../typescript-helpers/lib/hono-error-middleware/mod.ts",
     "@publicdomainrelay/logger": "../typescript-helpers/lib/logger/mod.ts",
+    "@publicdomainrelay/compute-deno-common": "./lib/common/compute-deno-common/mod.ts",
+    "@publicdomainrelay/compute-deno-abc": "./lib/abc/compute-deno/mod.ts",
+    "@publicdomainrelay/compute-deno-atproto": "./lib/compute-deno-atproto/mod.ts",
+    "@publicdomainrelay/hono-factory-compute-deno-atproto": "./lib/hono-factory-compute-deno-atproto/mod.ts",
     "@hono/hono": "jsr:@hono/hono@^4",
     "@std/assert": "jsr:@std/assert@^1"
   },
   "tasks": {
-    "check": "deno check lib/common/mod.ts lib/abc/sandbox/mod.ts lib/sandbox-deno/mod.ts lib/sandbox-deno/bundler.ts lib/hono-factory-sandbox-deno/mod.ts lib/hono-factory-sandbox-deno/factory.ts hono-sandbox/mod.ts",
+    "check": "deno check lib/common/mod.ts lib/common/compute-deno-common/mod.ts lib/abc/sandbox/mod.ts lib/abc/compute-deno/mod.ts lib/sandbox-deno/mod.ts lib/sandbox-deno/bundler.ts lib/compute-deno-atproto/mod.ts lib/hono-factory-sandbox-deno/mod.ts lib/hono-factory-sandbox-deno/factory.ts lib/hono-factory-compute-deno-atproto/mod.ts lib/hono-factory-compute-deno-atproto/factory.ts hono-sandbox/mod.ts hono-compute-deno/mod.ts",
     "dev": "deno run --allow-env --allow-read --allow-write --allow-run --allow-net --unstable-worker-options hono-sandbox/mod.ts",
+    "dev:compute": "deno run --allow-env --allow-read --allow-write --allow-run --allow-net --unstable-worker-options hono-compute-deno/mod.ts",
     "test": "deno test --allow-net --allow-env --allow-read --allow-write --allow-run --unstable-worker-options test/",
     "test:sandbox": "deno test --allow-env --allow-read --allow-write --allow-run --unstable-worker-options test/sandbox/",
     "test:factory": "deno test --allow-env --allow-read --allow-write --allow-run --unstable-worker-options test/hono-factory/",
+    "test:compute": "deno test --allow-env --allow-read --allow-write --allow-run --allow-net --unstable-worker-options test/compute-deno/",
     "test:integration": "deno test --allow-net --allow-env --unstable-worker-options test/integration_test.ts",
     "test:cli": "deno test --allow-run --allow-read test/cli_smoke_test.ts",
     "fmt": "deno fmt"

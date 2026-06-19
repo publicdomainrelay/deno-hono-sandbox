@@ -1,0 +1,49 @@
+{
+  "name": "hono-compute-deno",
+  "description": "Deno compute XRPC server with worker manifest and instance management",
+  "options": {
+    "port": {
+      "type": "number",
+      "description": "Port to listen on",
+      "env": "PORT",
+      "default": 2585
+    },
+    "hostname": {
+      "type": "string",
+      "description": "Hostname to bind to",
+      "env": "HOSTNAME",
+      "default": "127.0.0.1"
+    },
+    "unix-socket": {
+      "type": "string",
+      "description": "Unix socket path (overrides port/hostname)",
+      "env": "UNIX_SOCKET"
+    },
+    "pds-url": {
+      "type": "string",
+      "description": "PDS base URL for record creation",
+      "env": "PDS_URL"
+    },
+    "atproto-handle": {
+      "type": "string",
+      "description": "AT Protocol handle for PDS authentication",
+      "env": "ATPROTO_HANDLE"
+    },
+    "atproto-password": {
+      "type": "string",
+      "description": "AT Protocol app password for PDS authentication",
+      "env": "ATPROTO_PASSWORD"
+    },
+    "attestation-key-path": {
+      "type": "string",
+      "description": "Path to secp256k1 JWK key file for badge.blue attestation signing",
+      "env": "ATTESTATION_KEY_PATH",
+      "default": "./attestation-key.jwk"
+    },
+    "timeout-ms": {
+      "type": "number",
+      "description": "Default execution timeout in milliseconds",
+      "env": "COMPUTE_DENO_TIMEOUT_MS"
+    }
+  }
+}

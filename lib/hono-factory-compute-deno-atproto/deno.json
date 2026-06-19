@@ -1,0 +1,14 @@
+{
+  "name": "@publicdomainrelay/hono-factory-compute-deno-atproto",
+  "version": "0.0.0",
+  "license": "Unlicense",
+  "exports": "./mod.ts",
+  "imports": {
+    "@publicdomainrelay/compute-deno-common": "jsr:@publicdomainrelay/compute-deno-common@^0",
+    "@publicdomainrelay/compute-deno-abc": "jsr:@publicdomainrelay/compute-deno-abc@^0",
+    "@publicdomainrelay/compute-deno-atproto": "jsr:@publicdomainrelay/compute-deno-atproto@^0",
+    "@publicdomainrelay/sandbox-abc": "jsr:@publicdomainrelay/sandbox-abc@^0",
+    "@publicdomainrelay/hono-error-middleware": "jsr:@publicdomainrelay/hono-error-middleware@^0",
+    "@hono/hono": "jsr:@hono/hono@^4"
+  }
+}
