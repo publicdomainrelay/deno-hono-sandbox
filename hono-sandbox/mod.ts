@@ -7,7 +7,7 @@ let runtimeConfig: Record<string, unknown> | null = null;
 try {
   const mod = await import("./config.json", { with: { type: "json" } });
   runtimeConfig = mod.default as Record<string, unknown>;
-} catch { /* optional */ }
+} catch {}
 
 const cmd = await new Command("CONFIG_PATH_HONO_SANDBOX", cliArgsEnv, runtimeConfig)
   .resolve();
@@ -28,7 +28,6 @@ const server = Deno.serve(
 );
 
 function shutdown() {
-  console.error("\nShutting down...");
   factory.sandbox.shutdown().then(() => {
     server.shutdown();
     Deno.exit(0);

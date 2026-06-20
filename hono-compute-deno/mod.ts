@@ -8,19 +8,23 @@ import {
   signerFromPrivateKeyHex,
   createRemotePdsClient,
   signComputeServiceAuth,
+  createWorkerPolicyHandler,
+  createLoopbackPolicyHandler,
+  createRemotePermissionPolicyHandler,
 } from "@publicdomainrelay/compute-deno-atproto";
+import type { SigningKey, PdsClient } from "@publicdomainrelay/compute-deno-atproto";
+import type { PermissionPolicyHandler } from "@publicdomainrelay/compute-deno-abc";
 import { createDenoBundler, createPersistentDenoWorker } from "@publicdomainrelay/sandbox-deno";
 import { loadOrCreateAttestationKeyHex } from "@publicdomainrelay/utils-attestation-key";
 import { createSubscriber } from "@publicdomainrelay/did-key-relay-subscriber-xrpc";
 import { createSubscriberFactory } from "@publicdomainrelay/hono-factory-did-key-relay-subscriber-xrpc";
-import type { SigningKey, PdsClient } from "@publicdomainrelay/compute-deno-atproto";
 import cliArgsEnv from "./cli-args-env.json" with { type: "json" };
 
 let runtimeConfig: Record<string, unknown> | null = null;
 try {
   const mod = await import("./config.json", { with: { type: "json" } });
   runtimeConfig = mod.default as Record<string, unknown>;
-} catch { /* optional */ }
+} catch { }
 
 const { options } = await new Command(
   "CONFIG_PATH_HONO_COMPUTE_DENO",
@@ -113,6 +117,46 @@ const runner = createDenoComputeInstanceRunner({
   timeoutMs: options.timeoutMs as number | undefined,
 });
 
+let permissionPolicyHandler: PermissionPolicyHandler | undefined;
+let policyServerShutdown: (() => void) | undefined;
+
+if (options.permissionMode === "by-policy") {
+  if (options.policyHandlerService) {
+    if (!signingKey) {
+      log.error("policy-handler-service requires attestation-key-path", {});
+      Deno.exit(1);
+    }
+    const ref = options.policyHandlerService as string;
+    const m = ref.match(/^did:web:(.+)#(.+)$/);
+    if (!m) {
+      log.error("policy-handler-service must be did:web:<host>#<serviceId>", { ref });
+      Deno.exit(1);
+    }
+    const svcHost = m[1];
+    permissionPolicyHandler = createRemotePermissionPolicyHandler({
+      serviceEndpoint: `https://${svcHost}`,
+      signingKey,
+      issuerDid: `did:web:${hostname}`,
+    });
+  } else if (options.policyHandlerBuiltIn) {
+    const name = options.policyHandlerBuiltIn as string;
+    if (options.policyHandlerLoopback) {
+      const loopback = await createLoopbackPolicyHandler(name);
+      permissionPolicyHandler = loopback.handler;
+      policyServerShutdown = loopback.server.shutdown;
+      log.info("policy handler loopback started", { url: loopback.url, handler: name });
+    } else {
+      const workerHandler = createWorkerPolicyHandler(name, createPersistentDenoWorker);
+      permissionPolicyHandler = workerHandler.handler;
+      policyServerShutdown = () => workerHandler.worker.shutdown();
+      log.info("policy handler worker started", { handler: name });
+    }
+  } else {
+    log.error("permission-mode by-policy requires --policy-handler-built-in or --policy-handler-service", {});
+    Deno.exit(1);
+  }
+}
+
 const factory = createDenoComputeFactory({
   manifestStore,
   instanceStore,
@@ -120,6 +164,8 @@ const factory = createDenoComputeFactory({
   bundler,
   hostname,
   signingKey,
+  permissionPolicyHandler,
+  defaultPermissionMode: options.permissionMode as "deny-all" | "allow-all" | "by-policy" ?? "deny-all",
 });
 
 const relay = options.relay as boolean | undefined;
@@ -161,6 +207,7 @@ let server: { shutdown: () => void };
 function shutdown() {
   log.info("shutting down");
   runner.stopAll().then(() => {
+    if (policyServerShutdown) policyServerShutdown();
     server.shutdown();
     Deno.exit(0);
   });
@@ -173,8 +220,7 @@ if (unixSocket) {
   try {
     await Deno.remove(unixSocket);
   } catch {
-    /* stale socket */
-  }
+     }
   server = Deno.serve(
     { path: unixSocket, onListen: () => log.info("listening", { unixSocket }) },
     factory.app.fetch,

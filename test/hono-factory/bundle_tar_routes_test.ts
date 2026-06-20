@@ -52,7 +52,7 @@ Deno.test("POST /bundleTar bundles valid project tar", async () => {
   } finally {
     try {
       await Deno.remove(projectDir, { recursive: true });
-    } catch { /* cleanup */ }
+    } catch { }
   }
 });
 
@@ -87,7 +87,7 @@ Deno.test("POST /bundleTar rejects tar without deno.json", async () => {
   } finally {
     try {
       await Deno.remove(projectDir, { recursive: true });
-    } catch { /* cleanup */ }
+    } catch { }
   }
 });
 

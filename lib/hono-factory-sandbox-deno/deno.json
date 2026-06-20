@@ -3,8 +3,8 @@
   "version": "0.0.0",
   "license": "Unlicense",
   "exports": "./mod.ts",
-  "dependencies": {
-    "@publicdomainrelay/sandbox-abc": "jsr:@publicdomainrelay/sandbox-abc@0.0.0",
-    "@publicdomainrelay/sandbox-deno": "jsr:@publicdomainrelay/sandbox-deno@0.0.0"
+  "imports": {
+    "@publicdomainrelay/sandbox-abc": "jsr:@publicdomainrelay/sandbox-abc@^0",
+    "@publicdomainrelay/sandbox-deno": "jsr:@publicdomainrelay/sandbox-deno@^0"
   }
 }

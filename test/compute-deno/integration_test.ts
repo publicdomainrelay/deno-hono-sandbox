@@ -7,11 +7,9 @@ import {
   signerFromPrivateKeyHex,
 } from "@publicdomainrelay/compute-deno-atproto";
 import type { PdsClient } from "@publicdomainrelay/compute-deno-atproto";
-import { createDenoBundler } from "@publicdomainrelay/sandbox-deno";
+import { createDenoBundler, createPersistentDenoWorker } from "@publicdomainrelay/sandbox-deno";
 import {
   REGISTER_WORKER_MANIFEST_NSID,
-  RUN_PERSISTENT_WORKER_INSTANCE_NSID,
-  EXECUTE_WORKER_INSTANCE_NSID,
 } from "@publicdomainrelay/compute-deno-common";
 
 function createRequest(path: string, method = "GET", body?: unknown): Request {
@@ -23,7 +21,7 @@ function createRequest(path: string, method = "GET", body?: unknown): Request {
   return new Request(`http://127.0.0.1/${path}`, init);
 }
 
-Deno.test("[integration] full round-trip: register → run → execute", async () => {
+Deno.test("[integration] full round-trip: register (persistent) → instance running → execute", async () => {
   const did = "did:plc:integration-test";
   const records = new Map<string, Map<string, { uri: string; cid: string; value: Record<string, unknown> }>>();
   records.set(did, new Map());
@@ -71,6 +69,7 @@ Deno.test("[integration] full round-trip: register → run → execute", async (
     manifestStore,
     instanceStore,
     bundler,
+    createWorker: createPersistentDenoWorker,
     timeoutMs: 5000,
   });
 
@@ -89,32 +88,19 @@ Deno.test("[integration] full round-trip: register → run → execute", async (
   const regReq = createRequest(
     `xrpc/${REGISTER_WORKER_MANIFEST_NSID}`,
     "POST",
-    { source, denoJson },
+    { source, denoJson, persistent: true },
   );
   const regRes = await factory.app.fetch(regReq);
   assertEquals(regRes.status, 200);
   const regData = await regRes.json() as {
-    manifest: { uri: string; cid: string };
+    instance: { uri: string; cid: string };
     bundle: string;
   };
-  assertExists(regData.manifest.uri);
-  assertExists(regData.manifest.cid);
+  assertExists(regData.instance.uri);
+  assertExists(regData.instance.cid);
   assertExists(regData.bundle);
 
-  const runReq = createRequest(
-    `xrpc/${RUN_PERSISTENT_WORKER_INSTANCE_NSID}`,
-    "POST",
-    { manifest: { uri: regData.manifest.uri, cid: regData.manifest.cid } },
-  );
-  const runRes = await factory.app.fetch(runReq);
-  assertEquals(runRes.status, 200);
-  const runData = await runRes.json() as {
-    instance: { uri: string; cid: string };
-  };
-  assertExists(runData.instance.uri);
-  assertExists(runData.instance.cid);
-  const instanceRef = { ...runData.instance, $type: "com.atproto.repo.strongRef" as const };
-
+  const instanceRef = { ...regData.instance, $type: "com.atproto.repo.strongRef" as const };
   assertEquals(runner.isRunning(instanceRef), true);
 
   await runner.stop(instanceRef);

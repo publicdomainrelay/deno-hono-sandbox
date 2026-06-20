@@ -54,6 +54,27 @@
       "type": "string",
       "description": "Relay dispatcher hostname",
       "env": "RELAY_DISPATCHER_HOST"
+    },
+    "permission-mode": {
+      "type": "string",
+      "description": "Worker permission mode: deny-all (default), allow-all, or by-policy",
+      "env": "PERMISSION_MODE",
+      "default": "deny-all"
+    },
+    "policy-handler-built-in": {
+      "type": "string",
+      "description": "Built-in policy handler name (e.g., allow-net)",
+      "env": "POLICY_HANDLER_BUILT_IN"
+    },
+    "policy-handler-loopback": {
+      "type": "boolean",
+      "description": "Run built-in policy handler as ephemeral loopback HTTP service instead of Worker IPC",
+      "env": "POLICY_HANDLER_LOOPBACK"
+    },
+    "policy-handler-service": {
+      "type": "string",
+      "description": "Remote policy handler AT Protocol service reference: did:web:<host>#<serviceId>",
+      "env": "POLICY_HANDLER_SERVICE"
     }
   }
 }

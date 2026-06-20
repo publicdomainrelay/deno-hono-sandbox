@@ -1,11 +1,14 @@
 {
   "version": "0.0.0",
   "license": "Unlicense",
-  "publish": {
-    "include": ["cli-args-env.json"]
-  },
   "imports": {
     "@publicdomainrelay/cli-args-env": "jsr:@publicdomainrelay/cli-args-env@^0",
     "@publicdomainrelay/hono-factory-sandbox-deno": "jsr:@publicdomainrelay/hono-factory-sandbox-deno@0.0.0"
+  },
+  "publish": {
+    "include": ["cli-args-env.json"]
+  },
+  "compile": {
+    "include": ["cli-args-env.json"]
   }
 }

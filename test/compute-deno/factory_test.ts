@@ -30,6 +30,15 @@ function createRequest(path: string, method = "GET", body?: unknown): Request {
   return new Request(`http://127.0.0.1/${path}`, init);
 }
 
+const mockBundler = {
+  async bundle() {
+    return { bundleJs: "self.onmessage = () => { self.postMessage({ status: 200, headers: {}, body: {} }); };", stdout: "", stderr: "" };
+  },
+  async bundleTar() {
+    return { bundleJs: "self.onmessage = () => {};", stdout: "", stderr: "" };
+  },
+};
+
 class InMemoryManifestStore implements WorkerManifestStore {
   #records = new Map<string, WorkerManifestRecord>();
   #seq = 0;
@@ -100,6 +109,7 @@ Deno.test("GET /health returns ok", async () => {
     instanceStore: new InMemoryInstanceStore(),
     hostname: "test.local",
     strictAuth: false,
+    bundler: mockBundler,
     runner: new MockRunner(),
   });
 
@@ -110,13 +120,15 @@ Deno.test("GET /health returns ok", async () => {
   assertEquals(data.status, "ok");
 });
 
-Deno.test("POST /xrpc/registerWorkerManifest bundles and returns strongRef", async () => {
+Deno.test("POST /xrpc/registerWorkerManifest bundles, creates instance, and returns instance ref", async () => {
+  const runner = new MockRunner();
   const factory = createDenoComputeFactory({
     manifestStore: new InMemoryManifestStore(),
     instanceStore: new InMemoryInstanceStore(),
     hostname: "test.local",
     strictAuth: false,
-    runner: new MockRunner(),
+    bundler: mockBundler,
+    runner,
   });
 
   const source = "export default { fetch: (req: Request) => new Response('ok') };";
@@ -129,10 +141,62 @@ Deno.test("POST /xrpc/registerWorkerManifest bundles and returns strongRef", asy
   );
   const res = await factory.app.fetch(req);
   assertEquals(res.status, 200);
-  const data = await res.json() as { manifest: { uri: string; cid: string }; bundle: string };
-  assertExists(data.manifest.uri);
-  assertExists(data.manifest.cid);
+  const data = await res.json() as { instance: { uri: string; cid: string }; bundle: string };
+  assertExists(data.instance.uri);
+  assertExists(data.instance.cid);
   assertEquals(typeof data.bundle, "string");
+});
+
+Deno.test("POST /xrpc/registerWorkerManifest with persistent starts the runner", async () => {
+  const runner = new MockRunner();
+  const factory = createDenoComputeFactory({
+    manifestStore: new InMemoryManifestStore(),
+    instanceStore: new InMemoryInstanceStore(),
+    hostname: "test.local",
+    strictAuth: false,
+    bundler: mockBundler,
+    runner,
+  });
+
+  const source = "export default { fetch: (req: Request) => new Response('ok') };";
+  const denoJson = JSON.stringify({ exports: "./mod.ts" });
+
+  const req = createRequest(
+    `xrpc/${REGISTER_WORKER_MANIFEST_NSID}`,
+    "POST",
+    { source, denoJson, persistent: true },
+  );
+  const res = await factory.app.fetch(req);
+  assertEquals(res.status, 200);
+  const data = await res.json() as { instance: { uri: string; cid: string }; bundle: string };
+  const instanceRef = { ...data.instance, $type: "com.atproto.repo.strongRef" as const };
+  assertEquals(runner.isRunning(instanceRef), true);
+});
+
+Deno.test("POST /xrpc/registerWorkerManifest without persistent does not start runner", async () => {
+  const runner = new MockRunner();
+  const factory = createDenoComputeFactory({
+    manifestStore: new InMemoryManifestStore(),
+    instanceStore: new InMemoryInstanceStore(),
+    hostname: "test.local",
+    strictAuth: false,
+    bundler: mockBundler,
+    runner,
+  });
+
+  const source = "export default { fetch: (req: Request) => new Response('ok') };";
+  const denoJson = JSON.stringify({ exports: "./mod.ts" });
+
+  const req = createRequest(
+    `xrpc/${REGISTER_WORKER_MANIFEST_NSID}`,
+    "POST",
+    { source, denoJson, persistent: false },
+  );
+  const res = await factory.app.fetch(req);
+  assertEquals(res.status, 200);
+  const data = await res.json() as { instance: { uri: string; cid: string }; bundle: string };
+  const instanceRef = { ...data.instance, $type: "com.atproto.repo.strongRef" as const };
+  assertEquals(runner.isRunning(instanceRef), false);
 });
 
 Deno.test("POST /xrpc/registerWorkerManifest rejects missing source", async () => {
@@ -141,6 +205,7 @@ Deno.test("POST /xrpc/registerWorkerManifest rejects missing source", async () =
     instanceStore: new InMemoryInstanceStore(),
     hostname: "test.local",
     strictAuth: false,
+    bundler: mockBundler,
     runner: new MockRunner(),
   });
 
@@ -159,6 +224,7 @@ Deno.test("POST /xrpc/registerWorkerManifest rejects missing denoJson", async ()
     instanceStore: new InMemoryInstanceStore(),
     hostname: "test.local",
     strictAuth: false,
+    bundler: mockBundler,
     runner: new MockRunner(),
   });
 
@@ -177,6 +243,7 @@ Deno.test("POST /xrpc/registerWorkerManifest rejects non-JSON body", async () =>
     instanceStore: new InMemoryInstanceStore(),
     hostname: "test.local",
     strictAuth: false,
+    bundler: mockBundler,
     runner: new MockRunner(),
   });
 
@@ -198,6 +265,7 @@ Deno.test("POST /xrpc/runPersistentWorkerInstance creates instance", async () =>
     instanceStore,
     hostname: "test.local",
     strictAuth: false,
+    bundler: mockBundler,
     runner,
   });
 
@@ -227,6 +295,7 @@ Deno.test("POST /xrpc/runPersistentWorkerInstance rejects missing manifest", asy
     instanceStore: new InMemoryInstanceStore(),
     hostname: "test.local",
     strictAuth: false,
+    bundler: mockBundler,
     runner: new MockRunner(),
   });
 
@@ -249,6 +318,7 @@ Deno.test("POST /xrpc/executeWorkerInstance forwards request to runner", async (
     instanceStore,
     hostname: "test.local",
     strictAuth: false,
+    bundler: mockBundler,
     runner,
   });
 
@@ -280,6 +350,7 @@ Deno.test("POST /xrpc/executeWorkerInstance rejects missing instance", async () 
     instanceStore: new InMemoryInstanceStore(),
     hostname: "test.local",
     strictAuth: false,
+    bundler: mockBundler,
     runner: new MockRunner(),
   });
 
@@ -298,6 +369,7 @@ Deno.test("POST /xrpc/executeWorkerInstance rejects missing request", async () =
     instanceStore: new InMemoryInstanceStore(),
     hostname: "test.local",
     strictAuth: false,
+    bundler: mockBundler,
     runner: new MockRunner(),
   });
 
@@ -316,6 +388,7 @@ Deno.test("POST /xrpc/registerWorkerManifest returns 401 without auth header whe
     instanceStore: new InMemoryInstanceStore(),
     hostname: "localhost",
     strictAuth: true,
+    bundler: mockBundler,
     runner: new MockRunner(),
   });
 
@@ -348,6 +421,7 @@ Deno.test("POST /xrpc/registerWorkerManifest returns 401 with expired JWT", asyn
     instanceStore: new InMemoryInstanceStore(),
     hostname: "localhost",
     strictAuth: true,
+    bundler: mockBundler,
     runner: new MockRunner(),
   });
 

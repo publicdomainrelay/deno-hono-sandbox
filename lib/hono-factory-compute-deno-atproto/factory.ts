@@ -7,16 +7,18 @@ import type {
   WorkerInstanceStore,
   WorkerInstanceRunner,
   SigningKey,
+  PermissionPolicyHandler,
 } from "@publicdomainrelay/compute-deno-abc";
 import type { StrongRef } from "@publicdomainrelay/compute-deno-common";
 import {
   REGISTER_WORKER_MANIFEST_NSID,
   RUN_PERSISTENT_WORKER_INSTANCE_NSID,
   EXECUTE_WORKER_INSTANCE_NSID,
+  GATE_REGISTRY_WORKER_MANIFEST_PERMISSIONS_NSID,
   DenoComputeError,
 } from "@publicdomainrelay/compute-deno-common";
 import type { WorkerRequest } from "@publicdomainrelay/compute-deno-common";
-import type { Bundler } from "@publicdomainrelay/sandbox-common";
+import type { Bundler } from "@publicdomainrelay/sandbox-abc";
 import { verifyComputeServiceAuth } from "@publicdomainrelay/compute-deno-atproto";
 
 export interface DenoComputeFactoryOptions {
@@ -27,6 +29,8 @@ export interface DenoComputeFactoryOptions {
   bundler: Bundler;
   signingKey?: SigningKey;
   strictAuth?: boolean;
+  permissionPolicyHandler?: PermissionPolicyHandler;
+  defaultPermissionMode?: "deny-all" | "allow-all" | "by-policy";
 }
 
 export interface DenoComputeFactory {
@@ -91,12 +95,17 @@ export function createDenoComputeFactory(
           type: "ComputeDenoService",
           serviceEndpoint: `https://${host}`,
         },
+        {
+          id: "#gate_registry_worker_manifest_permissions",
+          type: "ComputeDenoService",
+          serviceEndpoint: `https://${host}`,
+        },
       ],
     });
   });
 
   app.post(`/xrpc/${REGISTER_WORKER_MANIFEST_NSID}`, requireAuth(REGISTER_WORKER_MANIFEST_NSID), async (c) => {
-    let body: { source?: string; denoJson?: string; denoLock?: string };
+    let body: { source?: string; denoJson?: string; denoLock?: string; persistent?: boolean; permissionMode?: "deny-all" | "allow-all" | "by-policy" };
     try {
       body = await c.req.json();
     } catch {
@@ -123,17 +132,47 @@ export function createDenoComputeFactory(
       );
     }
 
+    const mode = body.permissionMode ?? opts.defaultPermissionMode ?? "deny-all";
+
     const manifestRecord = {
       lock: body.denoLock ?? "{}",
       json: body.denoJson,
       bundle: bundleResult.bundleJs,
-    };
+      persistent: body.persistent,
+    } as import("@publicdomainrelay/compute-deno-common").WorkerManifestRecord;
 
-    const manifest = await opts.manifestStore.register(
+    if (mode === "by-policy") {
+      if (!opts.permissionPolicyHandler) {
+        throw new DenoComputeError("Policy handler not configured for by-policy mode", 500, "InternalError");
+      }
+      const result = await opts.permissionPolicyHandler.evaluate(manifestRecord);
+      if (!result.allow) {
+        return c.json({
+          error: "PermissionDenied",
+          message: "Permission policy denied registration",
+          violations: result.violations,
+        }, 403);
+      }
+    } else if (mode === "deny-all") {
+      delete manifestRecord.permissions;
+    }
+
+    const manifestRef = await opts.manifestStore.register(
       manifestRecord,
       opts.signingKey,
     );
-    return c.json({ manifest, bundle: bundleResult.bundleJs });
+
+    const instanceRecord = { manifest: manifestRef };
+    const instanceRef = await opts.instanceStore.register(
+      instanceRecord,
+      opts.signingKey,
+    );
+
+    if (body.persistent) {
+      await opts.runner.start(instanceRef, manifestRef);
+    }
+
+    return c.json({ instance: instanceRef, bundle: bundleResult.bundleJs });
   });
 
   app.post(`/xrpc/${RUN_PERSISTENT_WORKER_INSTANCE_NSID}`, requireAuth(RUN_PERSISTENT_WORKER_INSTANCE_NSID), async (c) => {
@@ -201,6 +240,23 @@ export function createDenoComputeFactory(
 
     const response = await opts.runner.execute(instanceRef, body.request);
     return c.json(response);
+  });
+
+  app.post(`/xrpc/${GATE_REGISTRY_WORKER_MANIFEST_PERMISSIONS_NSID}`, requireAuth(GATE_REGISTRY_WORKER_MANIFEST_PERMISSIONS_NSID), async (c) => {
+    let body: { manifest?: import("@publicdomainrelay/compute-deno-common").WorkerManifestRecord };
+    try {
+      body = await c.req.json();
+    } catch {
+      throw new DenoComputeError("Invalid JSON body", 400, "InvalidRequest");
+    }
+    if (!body.manifest) {
+      throw new DenoComputeError("manifest is required", 400, "InvalidRequest");
+    }
+    if (!opts.permissionPolicyHandler) {
+      throw new DenoComputeError("No permission policy handler configured", 500, "InternalError");
+    }
+    const result = await opts.permissionPolicyHandler.evaluate(body.manifest);
+    return c.json(result);
   });
 
   return { app };
