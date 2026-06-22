@@ -16,6 +16,7 @@
     "@publicdomainrelay/cli-args-env": "../typescript-helpers/lib/cli-args-env/mod.ts",
     "@publicdomainrelay/hono-error-middleware": "../typescript-helpers/lib/hono-error-middleware/mod.ts",
     "@publicdomainrelay/logger": "../typescript-helpers/lib/logger/mod.ts",
+    "@publicdomainrelay/serve": "../typescript-helpers/lib/serve/mod.ts",
     "@publicdomainrelay/sandbox-abc": "./lib/abc/sandbox/mod.ts",
     "@publicdomainrelay/sandbox-common": "./lib/common/sandbox-common/mod.ts",
     "@publicdomainrelay/sandbox-deno": "./lib/sandbox-deno/mod.ts",

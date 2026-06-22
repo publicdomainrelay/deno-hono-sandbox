@@ -1,6 +1,7 @@
 import { Command } from "@publicdomainrelay/cli-args-env";
 import { createSandboxFactory } from "@publicdomainrelay/hono-factory-sandbox-deno";
 import { createLogger } from "@publicdomainrelay/logger";
+import { createServe } from "@publicdomainrelay/serve";
 import cliArgsEnv from "./cli-args-env.json" with { type: "json" };
 
 let runtimeConfig: Record<string, unknown> | null = null;
@@ -16,23 +17,20 @@ const port = cmd.options.port as number;
 const hostname = cmd.options.hostname as string;
 const timeoutMs = cmd.options.timeoutMs as number | undefined;
 
+const logger = createLogger({ serviceName: "sandbox" });
 const factory = createSandboxFactory({ timeoutMs });
 
-const log = createLogger("sandbox");
-
-const server = Deno.serve(
-  { port, hostname, onListen: ({ hostname, port }) => {
-    log.info("listening", { hostname, port });
-  } },
-  factory.app.fetch,
-);
+const serve = createServe({ logger, tcp: { addr: hostname, port } });
+serve.app.route("/", factory.app as never);
 
 function shutdown() {
   factory.sandbox.shutdown().then(() => {
-    server.shutdown();
+    serve.shutdown();
     Deno.exit(0);
   });
 }
 
 Deno.addSignalListener("SIGINT", shutdown);
 Deno.addSignalListener("SIGTERM", shutdown);
+
+await serve.beginServe();

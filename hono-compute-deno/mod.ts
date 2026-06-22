@@ -1,5 +1,6 @@
 import { Command } from "@publicdomainrelay/cli-args-env";
-import { createStructuredLogger } from "@publicdomainrelay/logger";
+import { createLogger } from "@publicdomainrelay/logger";
+import { createServe } from "@publicdomainrelay/serve";
 import { createDenoComputeFactory } from "@publicdomainrelay/hono-factory-compute-deno-atproto";
 import {
   createDenoComputeManifestStore,
@@ -32,7 +33,7 @@ const { options } = await new Command(
   runtimeConfig,
 ).resolve();
 
-const log = createStructuredLogger("hono-compute-deno", "info");
+const log = createLogger({ serviceName: "hono-compute-deno" });
 
 const hostname = options.hostname as string;
 const port = options.port as number;
@@ -202,13 +203,18 @@ if (relay) {
   });
 }
 
-let server: { shutdown: () => void };
+const serve = createServe({
+  logger: log,
+  unix: unixSocket ? { socketPath: unixSocket } : undefined,
+  tcp: unixSocket ? undefined : { addr: hostname, port },
+});
+serve.app.route("/", factory.app as never);
 
 function shutdown() {
   log.info("shutting down");
   runner.stopAll().then(() => {
     if (policyServerShutdown) policyServerShutdown();
-    server.shutdown();
+    serve.shutdown();
     Deno.exit(0);
   });
 }
@@ -216,18 +222,4 @@ function shutdown() {
 Deno.addSignalListener("SIGINT", shutdown);
 Deno.addSignalListener("SIGTERM", shutdown);
 
-if (unixSocket) {
-  try {
-    await Deno.remove(unixSocket);
-  } catch {
-     }
-  server = Deno.serve(
-    { path: unixSocket, onListen: () => log.info("listening", { unixSocket }) },
-    factory.app.fetch,
-  );
-} else {
-  server = Deno.serve(
-    { port, hostname, onListen: () => log.info("listening", { port, hostname }) },
-    factory.app.fetch,
-  );
-}
+await serve.beginServe();
