@@ -1,18 +1,12 @@
 import { assertEquals, assertExists } from "@std/assert";
 import { createSandboxFactory } from "@publicdomainrelay/hono-factory-sandbox-deno";
 
-function allocatePort(): number {
-  const listener = Deno.listen({ port: 0 });
-  const port = listener.addr.port;
-  try { listener.close(); } catch { /* ok */ }
-  return port;
-}
-
 Deno.test("[integration] GET /health over HTTP", async () => {
   const factory = createSandboxFactory();
   const controller = new AbortController();
-  const port = allocatePort();
-  const server = Deno.serve({ port, signal: controller.signal }, factory.app.fetch);
+  const { promise: portReady, resolve: resolvePort } = Promise.withResolvers<number>();
+  const server = Deno.serve({ port: 0, signal: controller.signal, onListen: (addr) => resolvePort((addr as Deno.NetAddr).port) }, factory.app.fetch);
+  const port = await portReady;
 
   try {
     const res = await fetch(`http://127.0.0.1:${port}/health`);
@@ -29,8 +23,9 @@ Deno.test("[integration] GET /health over HTTP", async () => {
 Deno.test("[integration] POST /execute over HTTP", async () => {
   const factory = createSandboxFactory();
   const controller = new AbortController();
-  const port = allocatePort();
-  const server = Deno.serve({ port, signal: controller.signal }, factory.app.fetch);
+  const { promise: portReady, resolve: resolvePort } = Promise.withResolvers<number>();
+  const server = Deno.serve({ port: 0, signal: controller.signal, onListen: (addr) => resolvePort((addr as Deno.NetAddr).port) }, factory.app.fetch);
+  const port = await portReady;
 
   try {
     const res = await fetch(`http://127.0.0.1:${port}/execute`, {
