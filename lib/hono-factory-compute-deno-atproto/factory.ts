@@ -105,7 +105,7 @@ export function createDenoComputeFactory(
   });
 
   app.post(`/xrpc/${REGISTER_WORKER_MANIFEST_NSID}`, requireAuth(REGISTER_WORKER_MANIFEST_NSID), async (c) => {
-    let body: { source?: string; denoJson?: string; denoLock?: string; persistent?: boolean; permissionMode?: "deny-all" | "allow-all" | "by-policy" };
+    let body: { source?: string; denoJson?: string; denoLock?: string; persistent?: boolean; permissionMode?: "deny-all" | "allow-all" | "by-policy"; permissions?: Record<string, unknown> };
     try {
       body = await c.req.json();
     } catch {
@@ -139,6 +139,7 @@ export function createDenoComputeFactory(
       json: body.denoJson,
       bundle: bundleResult.bundleJs,
       persistent: body.persistent,
+      permissions: body.permissions as Record<string, unknown> | undefined,
     } as import("@publicdomainrelay/compute-deno-common").WorkerManifestRecord;
 
     if (mode === "by-policy") {

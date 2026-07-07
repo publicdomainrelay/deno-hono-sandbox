@@ -223,3 +223,8 @@ Deno.addSignalListener("SIGINT", shutdown);
 Deno.addSignalListener("SIGTERM", shutdown);
 
 await serve.beginServe();
+
+console.log(JSON.stringify({
+  event: "compute_deno_ready",
+  port: serve.tcpPort,
+}));
