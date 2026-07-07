@@ -1,0 +1,7 @@
+{
+  "imports": {
+    "@publicdomainrelay/compute-deno-atproto": "jsr:@publicdomainrelay/compute-deno-atproto@^0",
+    "@publicdomainrelay/compute-deno-common": "jsr:@publicdomainrelay/compute-deno-common@^0",
+    "@publicdomainrelay/sandbox-deno": "jsr:@publicdomainrelay/sandbox-deno@^0"
+  }
+}
