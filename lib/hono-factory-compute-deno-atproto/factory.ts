@@ -15,6 +15,8 @@ import {
   RUN_PERSISTENT_WORKER_INSTANCE_NSID,
   EXECUTE_WORKER_INSTANCE_NSID,
   GATE_REGISTRY_WORKER_MANIFEST_PERMISSIONS_NSID,
+  MARKET_EVALUATE_POLICY_NSID,
+  MARKET_EVALUATE_POLICY_LXM,
   DenoComputeError,
 } from "@publicdomainrelay/compute-deno-common";
 import type { WorkerRequest } from "@publicdomainrelay/compute-deno-common";
@@ -97,6 +99,11 @@ export function createDenoComputeFactory(
         },
         {
           id: "#gate_registry_worker_manifest_permissions",
+          type: "ComputeDenoService",
+          serviceEndpoint: `https://${host}`,
+        },
+        {
+          id: "#market_evaluate_policy",
           type: "ComputeDenoService",
           serviceEndpoint: `https://${host}`,
         },
@@ -257,6 +264,30 @@ export function createDenoComputeFactory(
       throw new DenoComputeError("No permission policy handler configured", 500, "InternalError");
     }
     const result = await opts.permissionPolicyHandler.evaluate(body.manifest);
+    return c.json(result);
+  });
+
+  app.post(`/xrpc/${MARKET_EVALUATE_POLICY_NSID}`, requireAuth(MARKET_EVALUATE_POLICY_LXM), async (c) => {
+    let body: { subjectDid?: string; rootRequesterDid?: string; counterpartyDid?: string; policyRef?: StrongRef };
+    try {
+      body = await c.req.json();
+    } catch {
+      throw new DenoComputeError("Invalid JSON body", 400, "InvalidRequest");
+    }
+    if (!body.subjectDid || !body.rootRequesterDid) {
+      throw new DenoComputeError("subjectDid and rootRequesterDid are required", 400, "InvalidRequest");
+    }
+    if (!opts.permissionPolicyHandler) {
+      return c.json({ allow: true, violations: [] });
+    }
+    const log = opts.bundler ? console.log : console.log;
+    const result = await opts.permissionPolicyHandler.evaluate({
+      lock: "",
+      json: "",
+      bundle: "",
+      permissions: {},
+    });
+    log("market_policy_eval", { subjectDid: body.subjectDid, rootRequesterDid: body.rootRequesterDid, allow: result.allow });
     return c.json(result);
   });
 
