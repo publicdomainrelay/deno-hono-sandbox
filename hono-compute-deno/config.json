@@ -7,5 +7,5 @@
   "attestation-key-path": "./attestation-key.jwk",
   "timeout-ms": null,
   "relay": null,
-  "relay-dispatcher-host": null
+  "ingress-proxy-host": null
 }

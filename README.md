@@ -372,7 +372,7 @@ ATPROTO_PASSWORD              PDS auth password
 ATTESTATION_KEY_PATH          secp256k1 JWK path (default: ./attestation-key.jwk)
 COMPUTE_DENO_TIMEOUT_MS       default execution timeout
 RELAY                         enable relay subscriber mode
-RELAY_DISPATCHER_HOST         relay dispatcher hostname
+RELAY_INGRESS_PROXY_HOST         relay dispatcher hostname
 PERMISSION_MODE               deny-all | allow-all | by-policy (default: deny-all)
 POLICY_HANDLER_BUILT_IN       built-in handler name (e.g., allow-net)
 POLICY_HANDLER_LOOPBACK       run built-in handler as loopback HTTP

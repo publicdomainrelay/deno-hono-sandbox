@@ -17,8 +17,8 @@ import type { SigningKey, PdsClient } from "@publicdomainrelay/compute-deno-atpr
 import type { PermissionPolicyHandler } from "@publicdomainrelay/compute-deno-abc";
 import { createDenoBundler, createPersistentDenoWorker } from "@publicdomainrelay/sandbox-deno";
 import { loadOrCreateAttestationKeyHex } from "@publicdomainrelay/utils-attestation-key";
-import { createSubscriber } from "@publicdomainrelay/did-key-relay-subscriber-xrpc";
-import { createSubscriberFactory } from "@publicdomainrelay/hono-factory-did-key-relay-subscriber-xrpc";
+import { createSubscriber } from "@publicdomainrelay/did-key-ingress-proxy-subscriber-xrpc";
+import { createSubscriberFactory } from "@publicdomainrelay/hono-factory-did-key-ingress-proxy-subscriber-xrpc";
 import cliArgsEnv from "./cli-args-env.json" with { type: "json" };
 
 let runtimeConfig: Record<string, unknown> | null = null;
@@ -170,35 +170,35 @@ const factory = createDenoComputeFactory({
 });
 
 const relay = options.relay as boolean | undefined;
-const relayDispatcherHost = options.relayDispatcherHost as string | undefined;
+const ingressProxyHost = options.ingressProxyHost as string | undefined;
 
 if (relay) {
   if (!signingKey) {
     log.error("relay mode requires attestation-key-path", {});
     Deno.exit(1);
   }
-  if (!relayDispatcherHost) {
-    log.error("relay mode requires relay-dispatcher-host", {});
+  if (!ingressProxyHost) {
+    log.error("relay mode requires ingress-proxy-host", {});
     Deno.exit(1);
   }
 
   const subscriberFactory = createSubscriberFactory({ app: factory.app });
 
   const getServiceAuthToken = async (nsid: string): Promise<string> => {
-    const origin = `https://${relayDispatcherHost}`;
-    return signComputeServiceAuth(signingKey, `did:web:${relayDispatcherHost}`, nsid);
+    const origin = `https://${ingressProxyHost}`;
+    return signComputeServiceAuth(signingKey, `did:web:${ingressProxyHost}`, nsid);
   };
 
   const handle = await createSubscriber({
     keypair: signingKey,
     getServiceAuthToken,
-    dispatcherHost: relayDispatcherHost,
+    ingressProxyHost: ingressProxyHost,
     handleRequest: (req) => subscriberFactory.handleRequest(req),
     label: "compute-deno",
   });
 
   log.info("relay subscriber registered", {
-    proxyRef: handle.proxyRef,
+    ingressRef: handle.ingressRef,
     subdomain: handle.subdomain,
   });
 }

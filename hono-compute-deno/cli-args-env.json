@@ -50,10 +50,10 @@
       "description": "Enable relay subscriber mode",
       "env": "RELAY"
     },
-    "relay-dispatcher-host": {
+    "ingress-proxy-host": {
       "type": "string",
       "description": "Relay dispatcher hostname",
-      "env": "RELAY_DISPATCHER_HOST"
+      "env": "INGRESS_PROXY_HOST"
     },
     "permission-mode": {
       "type": "string",

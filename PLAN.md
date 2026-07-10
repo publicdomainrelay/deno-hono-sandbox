@@ -19,7 +19,7 @@ PdsClient interface is finalized.
 - Verify inbound service-auth JWT on 3 XRPC routes
 - Check `aud` (did:web of server), `lxm` (NSID), `exp`, signature
 - Add `getServiceAuth` endpoint to issue tokens to callers
-- Pattern: `did-key-relay/lib/common/did-key-relay/mod.ts` `verifyServiceAuthExt`
+- Pattern: `did-key-relay/lib/common/xrpc-dispatcher/mod.ts` `verifyServiceAuthExt`
 - Reuse `SigningKey` interface already in ABC; wrap as JWT signer
 - Need keypair for signing tokens. CLI loads from `--attestation-key-path`
 - **Fan-out: independent of P0.3/P0.4. Depends on P0.1 for aud value.**
@@ -50,7 +50,7 @@ PdsClient interface is finalized.
 - Use existing `createSubscriber` + `createSubscriberFactory` from did-key-relay
 - Wrap factory app via `createSubscriberFactory({ app: factory.app })`
 - Register with relay dispatcher → service reachable through relay tunnel
-- Need cross-repo import: add `../did-key-relay/lib/...` to deno.json imports
+- Need cross-repo import: add `../did-key-ingress-proxy/lib/...` to deno.json imports
 - **Fan-out: depends on P0.1 + P0.2. Can run parallel with P0.3/P0.4.**
 
 ### P1.2 Publish lexicons
