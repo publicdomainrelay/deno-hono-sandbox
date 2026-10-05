@@ -53,10 +53,14 @@ export function createDenoComputeFactory(
         await next();
         return;
       }
-      const host = (c.req.header("host") ?? "").split(":")[0];
+      // The CONFIGURED hostname, not the request's Host header -- and `opts.hostname` is
+      // finally what it was declared for. This read `c.req.header("host")`, i.e. caller
+      // data, and that value became the expected `aud` AND (via verifyJwtSignature's old
+      // bypass) the switch that skipped signature verification: `Host: localhost`
+      // authenticated anyone. See the note in service-auth.ts for the other half.
       const authHeader = c.req.header("authorization");
       try {
-        await verifyComputeServiceAuth(authHeader, host, lxm, strictAuth);
+        await verifyComputeServiceAuth(authHeader, opts.hostname, lxm, strictAuth);
       } catch (err) {
         if (err instanceof DenoComputeError) {
           return new Response(JSON.stringify(err.toJSON()), {
