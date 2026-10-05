@@ -20,7 +20,16 @@ const timeoutMs = cmd.options.timeoutMs as number | undefined;
 const logger = createLogger({ serviceName: "sandbox" });
 const factory = createSandboxFactory({ timeoutMs });
 
-const serve = createServe({ logger, tcp: { addr: hostname, port } });
+const serve = createServe({
+  logger,
+  portFile: cmd.options.portFile as string | undefined,
+  tcp: {
+    addr: hostname,
+    port,
+    certFile: cmd.options.tlsCertFile as string | undefined,
+    keyFile: cmd.options.tlsKeyFile as string | undefined,
+  },
+});
 serve.app.route("/", factory.app as never);
 
 function shutdown() {

@@ -206,7 +206,13 @@ if (relay) {
 const serve = createServe({
   logger: log,
   unix: unixSocket ? { socketPath: unixSocket } : undefined,
-  tcp: unixSocket ? undefined : { addr: hostname, port },
+  tcp: unixSocket ? undefined : {
+    addr: hostname,
+    port,
+    certFile: options.tlsCertFile as string | undefined,
+    keyFile: options.tlsKeyFile as string | undefined,
+  },
+  portFile: options.portFile as string | undefined,
 });
 serve.app.route("/", factory.app as never);
 
