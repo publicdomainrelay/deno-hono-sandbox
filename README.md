@@ -1,3 +1,12 @@
+> **Frozen 2026-10-12.** The TypeScript of this repository that socialweb-computer uses now lives in
+> the socialweb-computer-kcp monorepo (https://github.com/publicdomainrelay/kcp-vm), under
+> `ts/deno-worker-sandbox/`, with its git history. That copy is the source of truth. Do not change these
+> paths here, and do not sync changes back:
+>
+> `lexicons/`, `lib/abc/{compute-deno,sandbox}`, `lib/common/{compute-deno-common,sandbox-common}`, `lib/compute-deno-atproto`, `lib/sandbox-deno`, `test/`. `hono-compute-deno/`, `hono-sandbox/` and the hono-factory packages stayed here.
+>
+> Make every change to them in socialweb-computer-kcp. Read its AGENTS.md first.
+
 # deno-worker-sandbox
 
 Two concepts: **sandbox** (ephemeral Deno Worker execution) and **compute-deno**
